@@ -37,11 +37,31 @@
 						</div>
 						<div class="card-footer">
 							<form id="messageArea" class="input-group">
-                                <input type="text" id="text" name="msg" placeholder="Type your message..." autocomplete="off" class="form-control type_msg" required/>
+								<!-- Ô nhập text -->
+								<input type="text" id="text" name="msg" placeholder="Type your message..." autocomplete="off" class="form-control type_msg" required/>
+
+								<!-- Nút Mic -->
 								<div class="input-group-append">
-									<button type="submit" id="send" class="input-group-text send_btn"><i class="fas fa-location-arrow"></i></button>
+									<button type="button" id="mic" class="input-group-text mic_btn">
+									<i class="fas fa-microphone"></i>
+									</button>
 								</div>
-							</form>
+
+								<!-- Nút Loa -->
+								<div class="input-group-append">
+									<button type="button" id="speaker" class="input-group-text speaker_btn">
+									<i class="fas fa-volume-up"></i>
+									</button>
+								</div>
+
+								<!-- Nút Send -->
+								<div class="input-group-append">
+									<button type="submit" id="send" class="input-group-text send_btn">
+									<i class="fas fa-location-arrow"></i>
+									</button>
+								</div>
+								</form>
+
 						</div>
 					</div>
 				</div>
@@ -75,6 +95,16 @@
 					event.preventDefault();
 				});
 			});
+			// Mic button click
+			$("#mic").on("click", function() {
+			alert("Mic button clicked - ở đây bạn viết code thu âm hoặc bật API speech-to-text");
+			});
+
+			// Speaker button click
+			$("#speaker").on("click", function() {
+			alert("Speaker button clicked - ở đây bạn viết code phát âm thanh TTS");
+			});
+
 		</script>
         
     </body>
