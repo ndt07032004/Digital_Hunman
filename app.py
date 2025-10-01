@@ -6,6 +6,7 @@ from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
+from src.logger import setup_logger
 from src.prompt import *
 import os
 
@@ -45,6 +46,14 @@ def chat():
     msg = request.form["msg"]
     response = rag_chain.invoke({"input": msg})
     return str(response["answer"])
+
+
+
+logger = setup_logger()
+logger.info("Rag bắt đầu chạy")
+logger.debug("gỡ lỗi")
+logger.error("lỗi")
+logger.critical("lỗi nghiêm trọng")
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8080, debug=True)
