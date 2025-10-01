@@ -1,23 +1,11 @@
-#ghi nhât ký
 import logging
 
-def setup_logger(name = "Tour-Guide-AI" ):
+def setup_logger(name="TourGuideBot"):
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
-
-    ch=logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-
-    if not logger.hasHandlers():
+    if not logger.handlers:
+        logger.setLevel(logging.DEBUG)
+        ch = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        ch.setFormatter(formatter)
         logger.addHandler(ch)
     return logger
-
-
-logger = setup_logger()
-logger.info("Rag bắt đầu chạy")
-logger.debug("gỡ lỗi")
-logger.error("lỗi")
-logger.critical("lỗi nghiêm trọng")

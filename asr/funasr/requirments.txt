@@ -1,6 +1,0 @@
-torch
-modelscope
-testresources
-torchaudio
-FunASR
-websockets~=10.4
