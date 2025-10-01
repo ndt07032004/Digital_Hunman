@@ -1,62 +1,152 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <title>TourGuideBot - Hướng Dẫn Viên AI</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <script>
-        function sendMessage() {
-            var msg = document.getElementById('msg').value;
-            fetch('/get', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'msg=' + encodeURIComponent(msg)
-            }).then(response => response.text()).then(answer => {
-                document.getElementById('response').innerHTML = answer;
-                // Gọi TTS để phát âm thanh
-                fetch('/tts', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({text: answer})
-                }).then(res => res.json()).then(data => {
-                    var audio = new Audio(data.audio_url);
-                    audio.play();
-                });
-            });
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fay Digital Assistant - Hỏi tôi về Việt Nam!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
         }
-
-        function startRecording() {
-            navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
-                var recorder = new MediaRecorder(stream);
-                recorder.start();
-                setTimeout(() => recorder.stop(), 5000);  // Ghi 5s
-                recorder.ondataavailable = e => {
-                    var form = new FormData();
-                    form.append('audio', e.data, 'voice.wav');
-                    fetch('/asr', {
-                        method: 'POST',
-                        body: form
-                    }).then(res => res.json()).then(data => {
-                        document.getElementById('msg').value = data.text;
-                        sendMessage();
-                    });
-                };
-            });
+        h1 {
+            text-align: center;
+            color: #2c3e50;
         }
-    </script>
+        #response {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            min-height: 50px;
+            border: 1px solid #ddd;
+        }
+        #chatForm {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        #msg {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #recordButton {
+            background-color: #e74c3c;
+        }
+        #recordButton:hover {
+            background-color: #c0392b;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <div class="chat">
-        <div class="card">
-            <div class="card-header">TourGuideBot - Hỏi tôi về du lịch, văn hóa Việt Nam!</div>
-            <div class="msg_card_body">
-                <p id="response">Câu trả lời sẽ hiển thị ở đây.</p>
-            </div>
-            <div class="card-footer">
-                <input id="msg" class="type_msg" placeholder="Nhập câu hỏi...">
-                <button class="send_btn" onclick="sendMessage()">Gửi</button>
-                <button class="attach_btn" onclick="startRecording()">Mic (Ghi âm)</button>
-            </div>
-        </div>
-    </div>
+    <h1>Fay Digital Assistant</h1>
+    <p>Hỏi tôi về du lịch, văn hóa Việt Nam!</p>
+    <div id="response">Câu trả lời sẽ hiển thị ở đây.</div>
+    <form id="chatForm">
+        <input type="text" id="msg" placeholder="Nhập câu hỏi...">
+        <button type="submit">Gửi</button>
+    </form>
+    <button id="recordButton">Mic (Ghi âm)</button>
+    <input type="file" id="audioUpload" accept="audio/*" class="hidden">
+    <audio id="ttsAudio" controls class="hidden"></audio>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:10197'); // Khớp với ASR_PORT
+        const responseDiv = document.getElementById('response');
+        const recordButton = document.getElementById('recordButton');
+        const ttsAudio = document.getElementById('ttsAudio');
+        let mediaRecorder;
+        let audioChunks = [];
+
+        ws.onopen = () => console.log('WebSocket connected to ASR');
+        ws.onmessage = (event) => {
+            const text = event.data;
+            responseDiv.innerText = text;
+            // Gửi text qua TTS
+            fetch('/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            }).then(res => res.json()).then(data => {
+                if (data.audio_url) {
+                    ttsAudio.src = data.audio_url;
+                    ttsAudio.classList.remove('hidden');
+                    ttsAudio.play();
+                }
+            });
+        };
+        ws.onerror = (error) => console.error('WebSocket error:', error);
+
+        document.getElementById('chatForm').onsubmit = (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('msg').value;
+            fetch('/get', {
+                method: 'POST',
+                body: new URLSearchParams({ msg })
+            }).then(res => res.text()).then(text => {
+                responseDiv.innerText = text;
+                fetch('/tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                }).then(res => res.json()).then(data => {
+                    if (data.audio_url) {
+                        ttsAudio.src = data.audio_url;
+                        ttsAudio.classList.remove('hidden');
+                        ttsAudio.play();
+                    }
+                });
+            });
+            document.getElementById('msg').value = '';
+        };
+
+        recordButton.onclick = () => {
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        mediaRecorder = new MediaRecorder(stream);
+                        audioChunks = [];
+                        mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+                        mediaRecorder.onstop = () => {
+                            const audioBlob = new Blob(audioChunks);
+                            const formData = new FormData();
+                            formData.append('audio', audioBlob);
+                            fetch('/asr', {
+                                method: 'POST',
+                                body: formData
+                            }).then(res => res.json()).then(data => {
+                                if (data.text) responseDiv.innerText = data.text;
+                            });
+                            stream.getTracks().forEach(track => track.stop());
+                        };
+                        mediaRecorder.start();
+                        recordButton.textContent = 'Dừng ghi âm';
+                    }).catch(err => console.error('Mic access denied:', err));
+            } else {
+                mediaRecorder.stop();
+                recordButton.textContent = 'Mic (Ghi âm)';
+            }
+        };
+    </script>
 </body>
 </html>

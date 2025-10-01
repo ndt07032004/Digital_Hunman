@@ -1,11 +1,11 @@
 import asyncio
 import websockets
 import argparse
-import json
 import logging
 import faster_whisper
 from faster_whisper import WhisperModel
 import os
+import json  # Thêm import json
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -23,11 +23,11 @@ logger.info("Model loaded.")
 
 task_queue = asyncio.Queue()
 
-async def ws_serve(websocket, path):  # Thêm tham số path
+async def ws_serve(websocket, path):
     try:
         async for message in websocket:
             if isinstance(message, str):
-                data = json.loads(message)
+                data = json.loads(message)  # Sử dụng json.loads
                 await task_queue.put((websocket, data.get('audio', b'')))
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
@@ -61,4 +61,4 @@ async def run_server():
         await asyncio.Future()
 
 if __name__ == "__main__":
-    asyncio.run(run_server())
+    asyncio.run(run_server()) 
